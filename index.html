@@ -396,12 +396,10 @@ function playAnnihilateSound() {
     setTimeout(function(){ playTone(800, 0.3, 0.1, 'sine'); }, 200);
 }
 
-/* ── Shape drawing ── */
+/* ── Chinese watercolor drawing ── */
 function drawShape(ctx, shape, cx, cy, r, color, dark) {
     ctx.save();
     ctx.translate(cx, cy);
-    ctx.shadowColor = color;
-    ctx.shadowBlur = r * 0.6;
     switch (shape) {
         case 'seed': drawSeed(ctx, r, color, dark); break;
         case 'sprout': drawSprout(ctx, r, color, dark); break;
@@ -415,713 +413,218 @@ function drawShape(ctx, shape, cx, cy, r, color, dark) {
     ctx.restore();
 }
 
+/* ── 1. 种子: 水墨点染 ── */
 function drawSeed(ctx, r, c, d) {
-    ctx.save();
-    // Soft shadow layer
-    ctx.shadowColor = d;
-    ctx.shadowBlur = r * 0.4;
-    ctx.shadowOffsetX = r * 0.1;
-    ctx.shadowOffsetY = r * 0.1;
-
-    // Organic wobbly seed body with gradient
-    var grad = ctx.createRadialGradient(-r * 0.2, -r * 0.2, 0, 0, 0, r);
-    grad.addColorStop(0, c);
-    grad.addColorStop(0.6, c);
-    grad.addColorStop(1, d);
-
-    ctx.beginPath();
-    var wobble = 0.1;
-    for (var i = 0; i <= 32; i++) {
-        var angle = (i / 32) * Math.PI * 2;
-        var nx = r * (1 + Math.sin(angle * 5 + 1.3) * wobble + Math.cos(angle * 3) * wobble * 0.5);
-        var ny = r * (1 + Math.cos(angle * 5 + 2.1) * wobble + Math.sin(angle * 4) * wobble * 0.5);
-        if (i === 0) ctx.moveTo(Math.cos(angle) * nx, Math.sin(angle) * ny);
-        else ctx.lineTo(Math.cos(angle) * nx, Math.sin(angle) * ny);
-    }
-    ctx.closePath();
-    ctx.fillStyle = grad;
-    ctx.globalAlpha = 0.85;
-    ctx.fill();
-
-    // Soft highlight layer
-    ctx.beginPath();
-    var grad2 = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 0, -r * 0.15, -r * 0.15, r * 0.5);
-    grad2.addColorStop(0, 'rgba(255,255,255,0.5)');
-    grad2.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = grad2;
-    ctx.globalAlpha = 0.6;
-    ctx.fill();
-
+    var g1 = ctx.createRadialGradient(-r*0.2, -r*0.2, r*0.1, 0, 0, r*1.1);
+    g1.addColorStop(0, c);
+    g1.addColorStop(0.6, c+'cc');
+    g1.addColorStop(1, d+'44');
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2);
+    ctx.fillStyle = g1; ctx.fill();
+    var g2 = ctx.createRadialGradient(r*0.15, -r*0.15, 0, 0, 0, r*0.45);
+    g2.addColorStop(0, d+'aa'); g2.addColorStop(1, 'transparent');
+    ctx.beginPath(); ctx.arc(0, 0, r*0.4, 0, Math.PI*2);
+    ctx.fillStyle = g2; ctx.fill();
+    ctx.strokeStyle = d+'55'; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.5;
+    ctx.beginPath(); ctx.arc(0, 0, r*0.85, 0, Math.PI*2); ctx.stroke();
     ctx.globalAlpha = 1;
-    ctx.shadowBlur = 0;
-
-    // Tiny organic center dot
-    ctx.beginPath();
-    var cx2 = r * 0.15, cy2 = r * 0.1;
-    for (var j = 0; j <= 16; j++) {
-        var a = (j / 16) * Math.PI * 2;
-        var nr = r * 0.25 * (1 + Math.sin(a * 4) * 0.15);
-        if (j === 0) ctx.moveTo(cx2 + Math.cos(a) * nr, cy2 + Math.sin(a) * nr);
-        else ctx.lineTo(cx2 + Math.cos(a) * nr, cy2 + Math.sin(a) * nr);
-    }
-    ctx.closePath();
-    ctx.fillStyle = d;
-    ctx.globalAlpha = 0.7;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.restore();
 }
 
+/* ── 2. 嫩芽: 竹叶出水 ── */
 function drawSprout(ctx, r, c, d) {
-    ctx.save();
-    // Soft shadow
-    ctx.shadowColor = d;
-    ctx.shadowBlur = r * 0.5;
-    ctx.shadowOffsetY = r * 0.15;
-
-    // Watercolor body circle with gradient
-    var grad = ctx.createRadialGradient(-r * 0.25, -r * 0.25, 0, 0, 0, r);
-    grad.addColorStop(0, c);
-    grad.addColorStop(0.7, c);
-    grad.addColorStop(1, d);
-
+    ctx.strokeStyle = d; ctx.lineWidth = r*0.18; ctx.lineCap = 'round';
     ctx.beginPath();
-    for (var i = 0; i <= 24; i++) {
-        var angle = (i / 24) * Math.PI * 2;
-        var wobble = Math.sin(angle * 4 + 1.2) * 0.08;
-        var nx = r * (1 + wobble), ny = r * (1 + wobble);
-        if (i === 0) ctx.moveTo(Math.cos(angle) * nx, Math.sin(angle) * ny);
-        else ctx.lineTo(Math.cos(angle) * nx, Math.sin(angle) * ny);
-    }
-    ctx.closePath();
-    ctx.fillStyle = grad;
-    ctx.globalAlpha = 0.8;
-    ctx.fill();
-
-    // Semi-transparent overlay layer
-    ctx.beginPath();
-    ctx.arc(r * 0.1, r * 0.1, r * 0.85, 0, Math.PI * 2);
-    ctx.fillStyle = d;
-    ctx.globalAlpha = 0.15;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.shadowBlur = 0;
-
-    // Wavy stem with bezier
-    ctx.beginPath();
-    ctx.moveTo(0, r * 0.35);
-    ctx.bezierCurveTo(r * 0.15, r * 0.1, r * -0.1, -r * 0.2, r * 0.05, -r * 0.55);
-    ctx.strokeStyle = d;
-    ctx.lineWidth = r * 0.18;
-    ctx.lineCap = 'round';
-    ctx.globalAlpha = 0.85;
+    ctx.moveTo(0, r*0.5);
+    ctx.bezierCurveTo(r*0.05, r*0.1, -r*0.05, -r*0.2, 0, -r*0.5);
     ctx.stroke();
-
-    // Two watercolor leaves with soft edges
-    ctx.globalAlpha = 0.9;
-    // Left leaf
-    ctx.save();
-    ctx.translate(-r * 0.25, -r * 0.3);
-    ctx.rotate(-Math.PI / 4 - 0.2);
-    var lg1 = ctx.createRadialGradient(-r * 0.1, -r * 0.05, 0, 0, 0, r * 0.35);
-    lg1.addColorStop(0, c);
-    lg1.addColorStop(1, d);
+    var g1 = ctx.createLinearGradient(-r*0.6, -r*0.4, r*0.1, -r*0.1);
+    g1.addColorStop(0, c); g1.addColorStop(1, d+'88');
     ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.bezierCurveTo(-r * 0.15, -r * 0.15, -r * 0.35, -r * 0.2, -r * 0.4, -r * 0.05);
-    ctx.bezierCurveTo(-r * 0.35, r * 0.1, -r * 0.15, r * 0.15, 0, 0);
-    ctx.fillStyle = lg1;
-    ctx.fill();
-    ctx.strokeStyle = d;
-    ctx.lineWidth = r * 0.03;
-    ctx.globalAlpha = 0.3;
-    ctx.stroke();
-    ctx.restore();
-
-    // Right leaf
-    ctx.save();
-    ctx.translate(r * 0.25, -r * 0.45);
-    ctx.rotate(Math.PI / 4 + 0.2);
-    var lg2 = ctx.createRadialGradient(r * 0.1, -r * 0.05, 0, 0, 0, r * 0.32);
-    lg2.addColorStop(0, c);
-    lg2.addColorStop(1, d);
+    ctx.moveTo(0, -r*0.15);
+    ctx.bezierCurveTo(-r*0.5, -r*0.35, -r*0.7, -r*0.2, -r*0.3, -r*0.05);
+    ctx.bezierCurveTo(-r*0.2, r*0.05, -r*0.1, 0, 0, -r*0.15);
+    ctx.fillStyle = g1; ctx.fill();
+    var g2 = ctx.createLinearGradient(r*0.3, -r*0.4, -r*0.1, -r*0.1);
+    g2.addColorStop(0, c); g2.addColorStop(1, d+'88');
     ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.bezierCurveTo(r * 0.15, -r * 0.15, r * 0.35, -r * 0.2, r * 0.38, -r * 0.05);
-    ctx.bezierCurveTo(r * 0.33, r * 0.1, r * 0.15, r * 0.15, 0, 0);
-    ctx.fillStyle = lg2;
-    ctx.globalAlpha = 0.9;
-    ctx.fill();
-    ctx.strokeStyle = d;
-    ctx.lineWidth = r * 0.03;
-    ctx.globalAlpha = 0.3;
-    ctx.stroke();
-    ctx.restore();
-
-    ctx.globalAlpha = 1;
-    ctx.restore();
+    ctx.moveTo(0, -r*0.3);
+    ctx.bezierCurveTo(r*0.4, -r*0.5, r*0.65, -r*0.4, r*0.3, -r*0.15);
+    ctx.bezierCurveTo(r*0.15, -r*0.05, r*0.1, -r*0.15, 0, -r*0.3);
+    ctx.fillStyle = g2; ctx.fill();
+    var g3 = ctx.createRadialGradient(r*0.1, r*0.1, 0, 0, 0, r*0.3);
+    g3.addColorStop(0, d); g3.addColorStop(1, 'transparent');
+    ctx.beginPath(); ctx.arc(r*0.05, r*0.05, r*0.25, 0, Math.PI*2);
+    ctx.fillStyle = g3; ctx.globalAlpha = 0.6; ctx.fill(); ctx.globalAlpha = 1;
 }
 
+/* ── 3. 花苞: 含苞待放 ── */
 function drawBud(ctx, r, c, d) {
-    ctx.save();
-    // Soft glow
-    ctx.shadowColor = d;
-    ctx.shadowBlur = r * 0.5;
-    ctx.shadowOffsetY = r * 0.1;
-
-    // Base circle with gradient
-    var grad = ctx.createRadialGradient(-r * 0.2, -r * 0.2, 0, 0, 0, r);
-    grad.addColorStop(0, c);
-    grad.addColorStop(0.6, c);
-    grad.addColorStop(1, d);
-
-    ctx.beginPath();
-    for (var i = 0; i <= 28; i++) {
-        var angle = (i / 28) * Math.PI * 2;
-        var wobble = Math.sin(angle * 5 + 2.3) * 0.06;
-        var nx = r * (1 + wobble), ny = r * (1 + wobble);
-        if (i === 0) ctx.moveTo(Math.cos(angle) * nx, Math.sin(angle) * ny);
-        else ctx.lineTo(Math.cos(angle) * nx, Math.sin(angle) * ny);
-    }
-    ctx.closePath();
-    ctx.fillStyle = grad;
-    ctx.globalAlpha = 0.85;
-    ctx.fill();
-
-    // Highlight overlay
-    ctx.beginPath();
-    var hlGrad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 0, -r * 0.2, -r * 0.2, r * 0.5);
-    hlGrad.addColorStop(0, 'rgba(255,255,255,0.45)');
-    hlGrad.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = hlGrad;
-    ctx.globalAlpha = 0.7;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.shadowBlur = 0;
-
-    // Tulip bud shape with bezier curves
-    ctx.beginPath();
-    ctx.moveTo(-r * 0.38, r * 0.15);
-    ctx.bezierCurveTo(-r * 0.45, -r * 0.1, -r * 0.5, -r * 0.5, -r * 0.2, -r * 0.7);
-    ctx.bezierCurveTo(0, -r * 0.85, 0, -r * 0.85, r * 0.2, -r * 0.7);
-    ctx.bezierCurveTo(r * 0.5, -r * 0.5, r * 0.45, -r * 0.1, r * 0.38, r * 0.15);
-    ctx.closePath();
-
-    var tulipGrad = ctx.createLinearGradient(0, -r * 0.7, 0, r * 0.15);
-    tulipGrad.addColorStop(0, c);
-    tulipGrad.addColorStop(0.5, d);
-    tulipGrad.addColorStop(1, d);
-    ctx.fillStyle = tulipGrad;
-    ctx.globalAlpha = 0.8;
-    ctx.fill();
-
-    // Tulip highlight
-    ctx.beginPath();
-    ctx.moveTo(-r * 0.15, r * 0.1);
-    ctx.bezierCurveTo(-r * 0.2, -r * 0.1, -r * 0.25, -r * 0.4, -r * 0.1, -r * 0.55);
-    ctx.bezierCurveTo(r * 0.05, -r * 0.45, r * 0.1, -r * 0.1, r * 0.05, r * 0.1);
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(255,255,255,0.25)';
-    ctx.fill();
-
-    // Stem
-    ctx.beginPath();
-    ctx.moveTo(0, r * 0.15);
-    ctx.bezierCurveTo(r * 0.05, r * 0.35, -r * 0.05, r * 0.55, 0, r * 0.75);
-    ctx.strokeStyle = '#5cb87a';
-    ctx.lineWidth = r * 0.12;
-    ctx.lineCap = 'round';
-    ctx.globalAlpha = 0.8;
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-    ctx.restore();
-}
-
-function drawFlower(ctx, r, c, d) {
-    ctx.save();
-    ctx.shadowColor = d;
-    ctx.shadowBlur = r * 0.4;
-
-    // 5 petals with gradient fills
     for (var i = 0; i < 5; i++) {
-        ctx.save();
-        ctx.rotate(i * Math.PI * 2 / 5);
-
-        // Petal gradient
-        var pg = ctx.createRadialGradient(0, -r * 0.5, 0, 0, -r * 0.45, r * 0.5);
-        pg.addColorStop(0, c);
-        pg.addColorStop(0.7, c);
-        pg.addColorStop(1, d);
-
-        // Organic petal shape with bezier
+        var a = (i / 5) * Math.PI * 2 - Math.PI/2;
+        var g = ctx.createRadialGradient(Math.cos(a)*r*0.4, Math.sin(a)*r*0.4, r*0.05, Math.cos(a)*r*0.5, Math.sin(a)*r*0.5, r*0.35);
+        g.addColorStop(0, c); g.addColorStop(0.5, c+'aa'); g.addColorStop(1, 'transparent');
         ctx.beginPath();
-        ctx.moveTo(0, -r * 0.18);
-        ctx.bezierCurveTo(-r * 0.32, -r * 0.3, -r * 0.35, -r * 0.6, -r * 0.18, -r * 0.75);
-        ctx.bezierCurveTo(0, -r * 0.85, 0, -r * 0.85, r * 0.18, -r * 0.75);
-        ctx.bezierCurveTo(r * 0.35, -r * 0.6, r * 0.32, -r * 0.3, 0, -r * 0.18);
-
-        ctx.fillStyle = pg;
-        ctx.globalAlpha = 0.75;
-        ctx.fill();
-
-        // Petal highlight
-        ctx.beginPath();
-        ctx.moveTo(-r * 0.08, -r * 0.25);
-        ctx.bezierCurveTo(-r * 0.15, -r * 0.4, -r * 0.1, -r * 0.55, 0, -r * 0.58);
-        ctx.bezierCurveTo(r * 0.05, -r * 0.45, r * 0.08, -r * 0.25, r * 0.02, -r * 0.2);
-        ctx.closePath();
-        ctx.fillStyle = 'rgba(255,255,255,0.35)';
-        ctx.globalAlpha = 0.5;
-        ctx.fill();
-
-        // Petal edge
-        ctx.strokeStyle = d;
-        ctx.lineWidth = r * 0.04;
-        ctx.globalAlpha = 0.4;
-        ctx.stroke();
-
-        ctx.restore();
+        ctx.ellipse(Math.cos(a)*r*0.45, Math.sin(a)*r*0.45, r*0.22, r*0.32, a, 0, Math.PI*2);
+        ctx.fillStyle = g; ctx.globalAlpha = 0.7; ctx.fill();
     }
-
-    ctx.globalAlpha = 1;
-    ctx.shadowBlur = 0;
-
-    // Golden center with radial gradient
-    var cg = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.28);
-    cg.addColorStop(0, '#fff8e0');
-    cg.addColorStop(0.3, '#ffd700');
-    cg.addColorStop(0.7, '#f5a623');
-    cg.addColorStop(1, d);
-
-    ctx.beginPath();
-    for (var k = 0; k <= 16; k++) {
-        var a = (k / 16) * Math.PI * 2;
-        var wobble = 1 + Math.sin(a * 6) * 0.08;
-        var nr = r * 0.22 * wobble;
-        if (k === 0) ctx.moveTo(Math.cos(a) * nr, Math.sin(a) * nr);
-        else ctx.lineTo(Math.cos(a) * nr, Math.sin(a) * nr);
-    }
-    ctx.closePath();
-    ctx.fillStyle = cg;
-    ctx.fill();
-
-    // Center dot
-    ctx.beginPath();
-    ctx.arc(0, 0, r * 0.08, 0, Math.PI * 2);
-    ctx.fillStyle = '#fff8e0';
-    ctx.fill();
-    ctx.restore();
+    var gc = ctx.createRadialGradient(0, 0, 0, 0, 0, r*0.35);
+    gc.addColorStop(0, c); gc.addColorStop(0.5, d+'cc'); gc.addColorStop(1, 'transparent');
+    ctx.beginPath(); ctx.arc(0, 0, r*0.3, 0, Math.PI*2);
+    ctx.fillStyle = gc; ctx.globalAlpha = 0.9; ctx.fill();
+    ctx.beginPath(); ctx.arc(0, r*0.7, r*0.15, 0, Math.PI*2);
+    ctx.fillStyle = d+'88'; ctx.globalAlpha = 0.6; ctx.fill(); ctx.globalAlpha = 1;
 }
 
-function drawFruit(ctx, r, c, d) {
-    ctx.save();
-    ctx.shadowColor = d;
-    ctx.shadowBlur = r * 0.6;
-    ctx.shadowOffsetY = r * 0.15;
-
-    // Main fruit body with organic gradient
-    var grad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 0, 0, 0, r * 0.9);
-    grad.addColorStop(0, '#ffcc80');
-    grad.addColorStop(0.3, c);
-    grad.addColorStop(0.7, c);
-    grad.addColorStop(1, d);
-
-    ctx.beginPath();
-    for (var i = 0; i <= 32; i++) {
-        var angle = (i / 32) * Math.PI * 2;
-        var wobble = Math.sin(angle * 4 + 1.5) * 0.06 + Math.cos(angle * 3) * 0.04;
-        var nx = r * 0.88 * (1 + wobble), ny = r * 0.9 * (1 + wobble);
-        if (i === 0) ctx.moveTo(Math.cos(angle) * nx, Math.sin(angle) * ny);
-        else ctx.lineTo(Math.cos(angle) * nx, Math.sin(angle) * ny);
-    }
-    ctx.closePath();
-    ctx.fillStyle = grad;
-    ctx.globalAlpha = 0.85;
-    ctx.fill();
-
-    // Semi-transparent overlay for watercolor effect
-    ctx.beginPath();
-    ctx.arc(r * 0.05, r * 0.05, r * 0.8, 0, Math.PI * 2);
-    ctx.fillStyle = d;
-    ctx.globalAlpha = 0.12;
-    ctx.fill();
-
-    // Soft highlight
-    ctx.beginPath();
-    var hl = ctx.createRadialGradient(-r * 0.35, -r * 0.35, 0, -r * 0.25, -r * 0.25, r * 0.4);
-    hl.addColorStop(0, 'rgba(255,255,255,0.6)');
-    hl.addColorStop(0.5, 'rgba(255,255,255,0.2)');
-    hl.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = hl;
-    ctx.globalAlpha = 0.7;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.shadowBlur = 0;
-
-    // Top shading (like a hat)
-    ctx.beginPath();
-    ctx.arc(0, -r * 0.55, r * 0.28, Math.PI, Math.PI * 2);
-    ctx.fillStyle = d;
-    ctx.globalAlpha = 0.25;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-
-    // Organic stem with bezier
-    ctx.beginPath();
-    ctx.moveTo(0, -r * 0.78);
-    ctx.bezierCurveTo(r * 0.08, -r * 0.88, r * 0.15, -r * 0.95, r * 0.12, -r * 1.0);
-    ctx.strokeStyle = '#6b3a1f';
-    ctx.lineWidth = r * 0.12;
-    ctx.lineCap = 'round';
-    ctx.globalAlpha = 0.85;
-    ctx.stroke();
-
-    // Small leaf on stem
-    ctx.beginPath();
-    ctx.moveTo(r * 0.05, -r * 0.9);
-    ctx.bezierCurveTo(r * 0.25, -r * 0.85, r * 0.35, -r * 0.75, r * 0.32, -r * 0.65);
-    ctx.bezierCurveTo(r * 0.25, -r * 0.7, r * 0.15, -r * 0.8, r * 0.05, -r * 0.88);
-    ctx.fillStyle = '#5cb87a';
-    ctx.globalAlpha = 0.8;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.restore();
-}
-
-function drawLeaf(ctx, r, c, d) {
-    ctx.save();
-    ctx.shadowColor = d;
-    ctx.shadowBlur = r * 0.4;
-
-    // Maple leaf base with gradient
-    var grad = ctx.createRadialGradient(0, -r * 0.1, 0, 0, 0, r);
-    grad.addColorStop(0, c);
-    grad.addColorStop(0.5, c);
-    grad.addColorStop(1, d);
-
-    ctx.beginPath();
-    // Draw maple leaf with bezier curves for organic feel
-    var points = [
-        { x: 0, y: -r * 0.95 },
-        { x: r * 0.25, y: -r * 0.75 },
-        { x: r * 0.5, y: -r * 0.85 },
-        { x: r * 0.6, y: -r * 0.6 },
-        { x: r * 0.85, y: -r * 0.55 },
-        { x: r * 0.7, y: -r * 0.35 },
-        { x: r * 0.9, y: -r * 0.1 },
-        { x: r * 0.6, y: 0 },
-        { x: r * 0.55, y: r * 0.25 },
-        { x: r * 0.65, y: r * 0.65 },
-        { x: r * 0.35, y: r * 0.7 },
-        { x: r * 0.35, y: r * 0.95 },
-        { x: 0, y: r * 0.6 },
-        { x: -r * 0.35, y: r * 0.95 },
-        { x: -r * 0.35, y: r * 0.7 },
-        { x: -r * 0.65, y: r * 0.65 },
-        { x: -r * 0.55, y: r * 0.25 },
-        { x: -r * 0.6, y: 0 },
-        { x: -r * 0.9, y: -r * 0.1 },
-        { x: -r * 0.7, y: -r * 0.35 },
-        { x: -r * 0.85, y: -r * 0.55 },
-        { x: -r * 0.6, y: -r * 0.6 },
-        { x: -r * 0.5, y: -r * 0.85 },
-        { x: -r * 0.25, y: -r * 0.75 }
-    ];
-
-    ctx.moveTo(points[0].x, points[0].y);
-    for (var i = 1; i < points.length; i++) {
-        var curr = points[i];
-        var prev = points[i - 1];
-        var cpX = (prev.x + curr.x) / 2 + (Math.random() - 0.5) * r * 0.05;
-        var cpY = (prev.y + curr.y) / 2 + (Math.random() - 0.5) * r * 0.05;
-        ctx.quadraticCurveTo(cpX, cpY, curr.x, curr.y);
-    }
-    ctx.closePath();
-    ctx.fillStyle = grad;
-    ctx.globalAlpha = 0.85;
-    ctx.fill();
-
-    // Semi-transparent overlay
-    ctx.fillStyle = d;
-    ctx.globalAlpha = 0.1;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-
-    // Watercolor texture overlay
-    ctx.beginPath();
-    ctx.arc(r * 0.1, -r * 0.1, r * 0.7, 0, Math.PI * 2);
-    var texGrad = ctx.createRadialGradient(r * 0.1, -r * 0.1, 0, r * 0.1, -r * 0.1, r * 0.5);
-    texGrad.addColorStop(0, 'rgba(255,255,255,0.2)');
-    texGrad.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = texGrad;
-    ctx.globalAlpha = 0.4;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-
-    // Leaf veins
-    ctx.shadowBlur = 0;
-    var veins = [
-        { x: 0, y: -r * 0.95, angle: 0 },
-        { x: r * 0.25, y: -r * 0.75, angle: 0.5 },
-        { x: r * 0.5, y: -r * 0.85, angle: 0.7 },
-        { x: r * 0.6, y: -r * 0.6, angle: 0.9 },
-        { x: r * 0.7, y: -r * 0.35, angle: 1.2 },
-        { x: r * 0.6, y: 0, angle: 1.5 }
-    ];
-
-    for (var v = 0; v < veins.length; v++) {
-        var vein = veins[v];
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        var vx = vein.x * Math.cos(vein.angle) - vein.y * Math.sin(vein.angle);
-        var vy = vein.x * Math.sin(vein.angle) + vein.y * Math.cos(vein.angle);
-        ctx.lineTo(vx * 0.7, vy * 0.7);
-        ctx.strokeStyle = d;
-        ctx.lineWidth = r * 0.035;
-        ctx.globalAlpha = 0.4;
-        ctx.stroke();
-    }
-
-    // Center vein
-    ctx.beginPath();
-    ctx.moveTo(0, r * 0.5);
-    ctx.lineTo(0, -r * 0.8);
-    ctx.strokeStyle = d;
-    ctx.lineWidth = r * 0.05;
-    ctx.globalAlpha = 0.35;
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-    ctx.restore();
-}
-
-function drawFrost(ctx, r, c, d) {
-    ctx.save();
-    ctx.shadowColor = '#ffffff';
-    ctx.shadowBlur = r * 0.5;
-
-    // Outer hexagon with gradient
-    var grad = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.9);
-    grad.addColorStop(0, c);
-    grad.addColorStop(0.6, 'rgba(220,225,230,0.9)');
-    grad.addColorStop(1, d);
-
-    ctx.beginPath();
-    for (var i = 0; i <= 6; i++) {
-        var angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
-        var wobble = 1 + Math.sin(angle * 5) * 0.05;
-        var nx = r * 0.85 * wobble, ny = r * 0.85 * wobble;
-        if (i === 0) ctx.moveTo(Math.cos(angle) * nx, Math.sin(angle) * ny);
-        else ctx.lineTo(Math.cos(angle) * nx, Math.sin(angle) * ny);
-    }
-    ctx.closePath();
-    ctx.fillStyle = grad;
-    ctx.globalAlpha = 0.8;
-    ctx.fill();
-
-    // Semi-transparent overlay
-    ctx.fillStyle = c;
-    ctx.globalAlpha = 0.2;
-    ctx.fill();
-
-    // Inner hexagon pattern
-    ctx.beginPath();
-    for (var j = 0; j <= 6; j++) {
-        var a2 = (j / 6) * Math.PI * 2 - Math.PI / 2;
-        if (j === 0) ctx.moveTo(Math.cos(a2) * r * 0.45, Math.sin(a2) * r * 0.45);
-        else ctx.lineTo(Math.cos(a2) * r * 0.45, Math.sin(a2) * r * 0.45);
-    }
-    ctx.closePath();
-    ctx.strokeStyle = d;
-    ctx.lineWidth = r * 0.06;
-    ctx.globalAlpha = 0.5;
-    ctx.stroke();
-
-    ctx.globalAlpha = 1;
-    ctx.shadowBlur = 0;
-
-    // Radiating lines
-    for (var k = 0; k < 6; k++) {
-        var a3 = k * Math.PI / 3;
-        ctx.beginPath();
-        ctx.moveTo(Math.cos(a3) * r * 0.15, Math.sin(a3) * r * 0.15);
-        ctx.lineTo(Math.cos(a3) * r * 0.8, Math.sin(a3) * r * 0.8);
-        ctx.strokeStyle = d;
-        ctx.lineWidth = r * 0.06;
-        ctx.globalAlpha = 0.4;
-        ctx.stroke();
-
-        // Branch patterns on each arm
-        var midX = Math.cos(a3) * r * 0.5;
-        var midY = Math.sin(a3) * r * 0.5;
-        ctx.beginPath();
-        ctx.moveTo(midX, midY);
-        ctx.lineTo(midX + Math.cos(a3 + 0.6) * r * 0.18, midY + Math.sin(a3 + 0.6) * r * 0.18);
-        ctx.moveTo(midX, midY);
-        ctx.lineTo(midX + Math.cos(a3 - 0.6) * r * 0.18, midY + Math.sin(a3 - 0.6) * r * 0.18);
-        ctx.lineWidth = r * 0.04;
-        ctx.globalAlpha = 0.3;
-        ctx.stroke();
-    }
-
-    // Center dot with glow
-    var centerGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.15);
-    centerGrad.addColorStop(0, 'rgba(255,255,255,0.9)');
-    centerGrad.addColorStop(0.5, c);
-    centerGrad.addColorStop(1, 'rgba(200,210,220,0.5)');
-    ctx.beginPath();
-    ctx.arc(0, 0, r * 0.12, 0, Math.PI * 2);
-    ctx.fillStyle = centerGrad;
-    ctx.globalAlpha = 1;
-    ctx.fill();
-    ctx.restore();
-}
-
-function drawCrystal(ctx, r, c, d) {
-    ctx.save();
-    ctx.shadowColor = '#ffffff';
-    ctx.shadowBlur = r * 0.8;
-
-    // Soft glow background
-    var glowGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
-    glowGrad.addColorStop(0, 'rgba(255,255,255,0.5)');
-    glowGrad.addColorStop(0.3, 'rgba(236,240,241,0.3)');
-    glowGrad.addColorStop(0.7, 'rgba(200,210,220,0.15)');
-    glowGrad.addColorStop(1, 'rgba(150,170,190,0)');
-    ctx.beginPath();
-    ctx.arc(0, 0, r, 0, Math.PI * 2);
-    ctx.fillStyle = glowGrad;
-    ctx.globalAlpha = 0.6;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-
-    // Main snowflake with 6 arms
+/* ── 4. 花朵: 盛开牡丹 ── */
+function drawFlower(ctx, r, c, d) {
     for (var i = 0; i < 6; i++) {
-        var angle = i * Math.PI / 3;
-        ctx.save();
-        ctx.rotate(angle);
-
-        // Main arm with gradient
-        var armGrad = ctx.createLinearGradient(0, 0, 0, -r * 0.85);
-        armGrad.addColorStop(0, d);
-        armGrad.addColorStop(0.3, c);
-        armGrad.addColorStop(0.7, 'rgba(255,255,255,0.9)');
-        armGrad.addColorStop(1, 'rgba(255,255,255,0.95)');
-
+        var a = (i / 6) * Math.PI * 2;
+        var g = ctx.createLinearGradient(Math.cos(a)*r*0.3, Math.sin(a)*r*0.3, Math.cos(a)*r, Math.sin(a)*r);
+        g.addColorStop(0, c+'ff'); g.addColorStop(0.5, c+'cc'); g.addColorStop(1, d+'33');
         ctx.beginPath();
-        ctx.moveTo(-r * 0.04, 0);
-        ctx.lineTo(-r * 0.02, -r * 0.8);
-        ctx.lineTo(0, -r * 0.9);
-        ctx.lineTo(r * 0.02, -r * 0.8);
-        ctx.lineTo(r * 0.04, 0);
-        ctx.closePath();
-        ctx.fillStyle = armGrad;
-        ctx.globalAlpha = 0.9;
+        ctx.ellipse(Math.cos(a)*r*0.65, Math.sin(a)*r*0.65, r*0.32, r*0.5, a, 0, Math.PI*2);
+        ctx.fillStyle = g; ctx.globalAlpha = 0.5; ctx.fill();
+    }
+    for (var i = 0; i < 5; i++) {
+        var a = (i / 5) * Math.PI * 2 + Math.PI/10;
+        var g = ctx.createRadialGradient(0, 0, r*0.1, Math.cos(a)*r*0.35, Math.sin(a)*r*0.35, r*0.5);
+        g.addColorStop(0, c); g.addColorStop(0.6, c+'dd'); g.addColorStop(1, d+'44');
+        ctx.beginPath();
+        ctx.ellipse(Math.cos(a)*r*0.42, Math.sin(a)*r*0.42, r*0.22, r*0.38, a, 0, Math.PI*2);
+        ctx.fillStyle = g; ctx.globalAlpha = 0.85; ctx.fill();
+    }
+    var gf = ctx.createRadialGradient(0, 0, 0, 0, 0, r*0.25);
+    gf.addColorStop(0, '#ffe066'); gf.addColorStop(0.5, '#ffcc00'); gf.addColorStop(1, '#cc9900');
+    ctx.beginPath(); ctx.arc(0, 0, r*0.22, 0, Math.PI*2);
+    ctx.fillStyle = gf; ctx.globalAlpha = 1; ctx.fill(); ctx.globalAlpha = 1;
+}
+
+/* ── 5. 果实: 柿子红 ── */
+function drawFruit(ctx, r, c, d) {
+    var g1 = ctx.createRadialGradient(-r*0.2, -r*0.3, r*0.1, 0, 0, r*1.0);
+    g1.addColorStop(0, c); g1.addColorStop(0.6, c+'dd'); g1.addColorStop(1, d+'55');
+    ctx.beginPath(); ctx.arc(0, 0, r*0.85, 0, Math.PI*2);
+    ctx.fillStyle = g1; ctx.fill();
+    var gh = ctx.createRadialGradient(-r*0.25, -r*0.3, 0, -r*0.25, -r*0.3, r*0.35);
+    gh.addColorStop(0, 'rgba(255,255,255,0.55)'); gh.addColorStop(0.5, 'rgba(255,255,255,0.15)'); gh.addColorStop(1, 'transparent');
+    ctx.beginPath(); ctx.ellipse(-r*0.2, -r*0.25, r*0.25, r*0.2, -Math.PI/4, 0, Math.PI*2);
+    ctx.fillStyle = gh; ctx.fill();
+    ctx.strokeStyle = d; ctx.lineWidth = r*0.12; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(0, -r*0.72);
+    ctx.bezierCurveTo(r*0.1, -r*0.85, -r*0.05, -r*0.9, 0, -r*0.95);
+    ctx.stroke();
+    ctx.fillStyle = d+'88'; ctx.globalAlpha = 0.5;
+    for (var i = 0; i < 3; i++) {
+        var a = (i/3)*Math.PI*2 - Math.PI/2;
+        ctx.beginPath();
+        ctx.ellipse(Math.cos(a)*r*0.15, -r*0.72+Math.sin(a)*r*0.08, r*0.12, r*0.06, a, 0, Math.PI*2);
         ctx.fill();
-
-        // Soft arm edges
-        ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-        ctx.lineWidth = r * 0.015;
-        ctx.globalAlpha = 0.5;
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-
-        // Branches on each arm
-        var branchPositions = [0.3, 0.5, 0.7];
-        for (var b = 0; b < branchPositions.length; b++) {
-            var bp = branchPositions[b];
-            var by = -r * bp;
-            var bl = r * (0.25 - bp * 0.1);
-
-            // Upper branch
-            ctx.beginPath();
-            ctx.moveTo(0, by);
-            ctx.bezierCurveTo(
-                -r * 0.08, by - bl * 0.3,
-                -bl * 0.8, by - bl * 0.5,
-                -bl, by - bl
-            );
-            ctx.bezierCurveTo(
-                -bl * 0.85, by - bl * 0.85,
-                -r * 0.05, by - bl * 0.5,
-                0, by
-            );
-            ctx.fillStyle = armGrad;
-            ctx.globalAlpha = 0.85;
-            ctx.fill();
-
-            // Lower branch
-            ctx.beginPath();
-            ctx.moveTo(0, by);
-            ctx.bezierCurveTo(
-                r * 0.08, by - bl * 0.3,
-                bl * 0.8, by - bl * 0.5,
-                bl, by - bl
-            );
-            ctx.bezierCurveTo(
-                bl * 0.85, by - bl * 0.85,
-                r * 0.05, by - bl * 0.5,
-                0, by
-            );
-            ctx.fillStyle = armGrad;
-            ctx.globalAlpha = 0.85;
-            ctx.fill();
-        }
-
-        ctx.restore();
     }
-
     ctx.globalAlpha = 1;
-    ctx.shadowBlur = 0;
+}
 
-    // Center hexagon with shimmer
-    var centerGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.2);
-    centerGrad.addColorStop(0, 'rgba(255,255,255,1)');
-    centerGrad.addColorStop(0.4, 'rgba(236,240,241,0.95)');
-    centerGrad.addColorStop(0.8, c);
-    centerGrad.addColorStop(1, d);
-
+/* ── 6. 落叶: 枫叶秋色 ── */
+function drawLeaf(ctx, r, c, d) {
     ctx.beginPath();
-    for (var k = 0; k <= 6; k++) {
-        var a = (k / 6) * Math.PI * 2;
-        var wobble = 1 + Math.sin(a * 4 + 2) * 0.08;
-        var nx = r * 0.15 * wobble, ny = r * 0.15 * wobble;
-        if (k === 0) ctx.moveTo(Math.cos(a) * nx, Math.sin(a) * ny);
-        else ctx.lineTo(Math.cos(a) * nx, Math.sin(a) * ny);
+    for (var i = 0; i < 5; i++) {
+        var a = (i / 5) * Math.PI * 2 - Math.PI/2;
+        var r1 = r * (0.85 + Math.sin(i*2.3)*0.08);
+        var r2 = r * (0.3 + Math.sin(i*3.1)*0.08);
+        ctx.lineTo(Math.cos(a)*r1, Math.sin(a)*r1);
+        var am = a + Math.PI/5;
+        ctx.lineTo(Math.cos(am)*r2, Math.sin(am)*r2);
     }
     ctx.closePath();
-    ctx.fillStyle = centerGrad;
-    ctx.fill();
+    var gl = ctx.createRadialGradient(r*0.1, -r*0.1, 0, 0, 0, r);
+    gl.addColorStop(0, c); gl.addColorStop(0.5, c+'dd'); gl.addColorStop(1, d+'44');
+    ctx.fillStyle = gl; ctx.fill();
+    ctx.strokeStyle = d+'66'; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.4; ctx.stroke();
+    ctx.strokeStyle = d; ctx.lineWidth = r*0.06; ctx.globalAlpha = 0.35;
+    ctx.beginPath(); ctx.moveTo(0, r*0.5); ctx.lineTo(0, -r*0.5); ctx.stroke();
+    for (var j = 0; j < 5; j++) {
+        var a = (j/5)*Math.PI*2 - Math.PI/2;
+        ctx.beginPath(); ctx.moveTo(0, -r*0.1);
+        ctx.lineTo(Math.cos(a)*r*0.5, Math.sin(a)*r*0.5);
+        ctx.lineWidth = r*0.04; ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+}
 
-    // Inner sparkle
+/* ── 7. 霜花: 冰晶凝结 ── */
+function drawFrost(ctx, r, c, d) {
     ctx.beginPath();
-    ctx.moveTo(0, -r * 0.08);
-    ctx.lineTo(r * 0.08, 0);
-    ctx.lineTo(0, r * 0.08);
-    ctx.lineTo(-r * 0.08, 0);
+    for (var i = 0; i < 6; i++) {
+        var a = (i / 6) * Math.PI * 2;
+        var ax = Math.cos(a)*r*0.88, ay = Math.sin(a)*r*0.88;
+        var wa = a + Math.PI/6;
+        var wx = Math.cos(wa)*r*0.4, wy = Math.sin(wa)*r*0.4;
+        if (i === 0) ctx.moveTo(ax, ay); else ctx.lineTo(ax, ay);
+        ctx.lineTo(wx, wy);
+    }
     ctx.closePath();
+    var gf = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+    gf.addColorStop(0, 'rgba(255,255,255,0.95)'); gf.addColorStop(0.3, c);
+    gf.addColorStop(0.7, c+'cc'); gf.addColorStop(1, d+'44');
+    ctx.fillStyle = gf; ctx.fill();
+    ctx.beginPath();
+    for (var j = 0; j < 6; j++) {
+        var a2 = (j/6)*Math.PI*2;
+        var x = Math.cos(a2)*r*0.4, y = Math.sin(a2)*r*0.4;
+        if (j===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1; ctx.globalAlpha = 0.4; ctx.stroke();
+    for (var k = 0; k < 6; k++) {
+        var a3 = (k/6)*Math.PI*2;
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a3)*r*0.88, Math.sin(a3)*r*0.88);
+        ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.3; ctx.stroke();
+        var bx = Math.cos(a3)*r*0.55, by = Math.sin(a3)*r*0.55;
+        ctx.beginPath(); ctx.moveTo(bx, by);
+        ctx.lineTo(Math.cos(a3+0.5)*r*0.7, Math.sin(a3+0.5)*r*0.7); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(bx, by);
+        ctx.lineTo(Math.cos(a3-0.5)*r*0.7, Math.sin(a3-0.5)*r*0.7); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+}
+
+/* ── 8. 雪晶: 瑞雪纷飞 ── */
+function drawCrystal(ctx, r, c, d) {
+    var glow = ctx.createRadialGradient(0, 0, r*0.3, 0, 0, r*1.1);
+    glow.addColorStop(0, 'rgba(255,255,255,0.3)'); glow.addColorStop(0.5, c+'44'); glow.addColorStop(1, 'transparent');
+    ctx.beginPath(); ctx.arc(0, 0, r*1.05, 0, Math.PI*2);
+    ctx.fillStyle = glow; ctx.fill();
+    ctx.beginPath(); ctx.arc(0, 0, r*0.9, 0, Math.PI*2);
+    var gc = ctx.createRadialGradient(0, 0, 0, 0, 0, r*0.9);
+    gc.addColorStop(0, 'rgba(255,255,255,0.95)'); gc.addColorStop(0.3, c);
+    gc.addColorStop(0.7, c+'aa'); gc.addColorStop(1, d+'66');
+    ctx.fillStyle = gc; ctx.fill();
+    for (var i = 0; i < 6; i++) {
+        var a = (i/6)*Math.PI*2;
+        var ex = Math.cos(a)*r*0.85, ey = Math.sin(a)*r*0.85;
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = r*0.12; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(ex, ey); ctx.stroke();
+        var bl = r*0.25, br1x = Math.cos(a)*r*0.5, br1y = Math.sin(a)*r*0.5;
+        ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = r*0.07;
+        ctx.beginPath(); ctx.moveTo(br1x, br1y);
+        ctx.lineTo(br1x+Math.cos(a+0.55)*bl, br1y+Math.sin(a+0.55)*bl); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(br1x, br1y);
+        ctx.lineTo(br1x+Math.cos(a-0.55)*bl, br1y+Math.sin(a-0.55)*bl); ctx.stroke();
+    }
     ctx.fillStyle = 'rgba(255,255,255,0.95)';
-    ctx.globalAlpha = 0.9;
+    ctx.beginPath();
+    ctx.moveTo(0, -r*0.15); ctx.lineTo(r*0.15, 0);
+    ctx.lineTo(0, r*0.15); ctx.lineTo(-r*0.15, 0); ctx.closePath();
     ctx.fill();
-
-    // Tiny sparkle dots
-    var sparkles = [
-        { x: r * 0.35, y: -r * 0.5 },
-        { x: -r * 0.4, y: r * 0.3 },
-        { x: r * 0.5, y: r * 0.35 }
-    ];
-    for (var s = 0; s < sparkles.length; s++) {
-        var sp = sparkles[s];
-        var spGrad = ctx.createRadialGradient(sp.x, sp.y, 0, sp.x, sp.y, r * 0.08);
-        spGrad.addColorStop(0, 'rgba(255,255,255,1)');
-        spGrad.addColorStop(1, 'rgba(255,255,255,0)');
+    for (var s = 0; s < 6; s++) {
+        var sa = (s/6)*Math.PI*2;
+        var sg = ctx.createRadialGradient(Math.cos(sa)*r*0.65, Math.sin(sa)*r*0.65, 0, Math.cos(sa)*r*0.65, Math.sin(sa)*r*0.65, r*0.08);
+        sg.addColorStop(0, 'rgba(255,255,255,1)'); sg.addColorStop(1, 'transparent');
         ctx.beginPath();
-        ctx.arc(sp.x, sp.y, r * 0.06, 0, Math.PI * 2);
-        ctx.fillStyle = spGrad;
-        ctx.globalAlpha = 0.7;
-        ctx.fill();
+        ctx.arc(Math.cos(sa)*r*0.65, Math.sin(sa)*r*0.65, r*0.06, 0, Math.PI*2);
+        ctx.fillStyle = sg; ctx.globalAlpha = 0.8; ctx.fill();
     }
     ctx.globalAlpha = 1;
-    ctx.restore();
 }
 
 /* ── FX system ── */
