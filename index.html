@@ -756,6 +756,18 @@ function buildHelp() {
     }).join(' → ');
 }
 
+/* ── Difficulty system ── */
+function getDifficulty() {
+    // Scale difficulty based on score
+    if (score < 500) return { maxDrop: 2, cooldown: 900, gravity: 0.8, label: '🌱 春风' };
+    if (score < 2000) return { maxDrop: 3, cooldown: 800, gravity: 0.9, label: '🌿 暖阳' };
+    if (score < 5000) return { maxDrop: 4, cooldown: 700, gravity: 1.0, label: '🌸 花开' };
+    if (score < 10000) return { maxDrop: 5, cooldown: 600, gravity: 1.1, label: '🍎 丰收' };
+    if (score < 20000) return { maxDrop: 5, cooldown: 500, gravity: 1.2, label: '🍂 秋风' };
+    if (score < 50000) return { maxDrop: 6, cooldown: 450, gravity: 1.3, label: '❄️ 寒霜' };
+    return { maxDrop: 6, cooldown: 400, gravity: 1.4, label: '💎 极寒' };
+}
+
 /* ── Drop ── */
 function onDrop(e) {
     if (!gameRunning || !canDrop) return;
@@ -765,24 +777,39 @@ function onDrop(e) {
     var s = SEASONS[nextLevel - 1];
     if (x < s.radius + 5 || x > CW - s.radius - 5) return;
 
+    var diff = getDifficulty();
+
     var body = Bodies.circle(x, s.radius + 5, s.radius, {
         friction: 0.3, restitution: 0.15, density: 0.002,
         label: 'season_' + nextLevel,
-        plugin: { level: nextLevel, merged: false, born: Date.now() }
+        plugin: { level: nextLevel, merged: false, removed: false, born: Date.now() }
     });
     Composite.add(engine.world, body);
+
+    // Update gravity based on difficulty
+    engine.world.gravity.y = diff.gravity;
 
     // Drop sound
     playTone(200 + nextLevel * 40, 0.08, 0.05, 'sine');
 
     canDrop = false;
-    setTimeout(function(){ canDrop = true; }, 900);
+    setTimeout(function(){ canDrop = true; }, diff.cooldown);
 
+    // Pick next level based on difficulty
     var rnd = Math.random();
-    if (rnd < 0.45) nextLevel = 1 + Math.floor(Math.random() * 2);
-    else if (rnd < 0.80) nextLevel = 2 + Math.floor(Math.random() * 2);
-    else nextLevel = 3;
+    if (rnd < 0.40) nextLevel = 1 + Math.floor(Math.random() * Math.min(2, diff.maxDrop));
+    else if (rnd < 0.75) nextLevel = 2 + Math.floor(Math.random() * Math.min(2, diff.maxDrop - 1));
+    else nextLevel = Math.min(diff.maxDrop, 3 + Math.floor(Math.random() * (diff.maxDrop - 2)));
+    nextLevel = Math.max(1, Math.min(nextLevel, 5)); // cap at level 5 drops
+
     updatePreview();
+    updateDifficultyDisplay();
+}
+
+function updateDifficultyDisplay() {
+    var diff = getDifficulty();
+    var el = document.getElementById('highLevel');
+    el.textContent = diff.label;
 }
 
 /* ── Collision ── */
@@ -792,17 +819,26 @@ function onCollision(event) {
     var pairs = event.pairs;
     for (var i = 0; i < pairs.length; i++) {
         var a = pairs[i].bodyA, b = pairs[i].bodyB;
-        if (!a.label.startsWith('season_') || !b.label.startsWith('season_')) continue;
+        if (!a.label || !a.label.startsWith('season_')) continue;
+        if (!b.label || !b.label.startsWith('season_')) continue;
+        if (!a.plugin || !b.plugin) continue;
         if (a.plugin.merged || b.plugin.merged) continue;
         if (a.plugin.level !== b.plugin.level) continue;
 
-        // Mark immediately to prevent re-merging
         a.plugin.merged = true;
         b.plugin.merged = true;
-
-        // Store merge data for processing
-        pendingMerges.push({ a: a, b: b, lv: a.plugin.level });
+        pendingMerges.push({ aId: a.id, bId: b.id, lv: a.plugin.level });
     }
+}
+
+function bodyExists(id) {
+    try {
+        var all = Composite.allBodies(engine.world);
+        for (var j = 0; j < all.length; j++) {
+            if (all[j].id === id) return all[j];
+        }
+    } catch(e) {}
+    return null;
 }
 
 function processMerges() {
@@ -811,13 +847,18 @@ function processMerges() {
 
     for (var i = 0; i < merges.length; i++) {
         var m = merges[i];
-        var a = m.a, b = m.b, lv = m.lv;
+        var a = bodyExists(m.aId);
+        var b = bodyExists(m.bId);
+        if (!a || !b) continue;
+        if (a.plugin.removed || b.plugin.removed) continue;
 
-        // Verify bodies still exist in world
-        if (!Composite.get(engine.world, a.id, 'body') || !Composite.get(engine.world, b.id, 'body')) continue;
-
+        var lv = m.lv;
         var mx = (a.position.x + b.position.x) / 2;
         var my = (a.position.y + b.position.y) / 2;
+
+        // Mark as removed to prevent any further processing
+        a.plugin.removed = true;
+        b.plugin.removed = true;
 
         addCombo();
         var comboMult = Math.max(1, combo);
@@ -832,18 +873,14 @@ function processMerges() {
             var flash = document.getElementById('annihilateFlash');
             flash.classList.add('flash');
             setTimeout(function(){ flash.classList.remove('flash'); }, 150);
-            Composite.remove(engine.world, a);
-            Composite.remove(engine.world, b);
+            try { Composite.remove(engine.world, a); } catch(e) {}
+            try { Composite.remove(engine.world, b); } catch(e) {}
         } else {
             var nl = lv + 1;
             var ns = SEASONS[nl - 1];
-            var nb = Bodies.circle(mx, my, ns.radius, {
-                friction: 0.3, restitution: 0.15, density: 0.002,
-                label: 'season_' + nl,
-                plugin: { level: nl, merged: false, born: Date.now() }
-            });
             var mergeScore = ns.score * comboMult;
             score += mergeScore;
+
             addGlow(mx, my, ns.color, ns.radius * 1.5);
             addBurst(mx, my, ns.color, 8 + nl * 3, 2 + nl * 0.5);
             playMergeSound(nl);
@@ -854,8 +891,15 @@ function processMerges() {
                 highestLevel = nl;
                 document.getElementById('highLevel').textContent = '最高: ' + SEASONS[highestLevel - 1].name;
             }
-            Composite.remove(engine.world, a);
-            Composite.remove(engine.world, b);
+
+            try { Composite.remove(engine.world, a); } catch(e) {}
+            try { Composite.remove(engine.world, b); } catch(e) {}
+
+            var nb = Bodies.circle(mx, my, ns.radius, {
+                friction: 0.3, restitution: 0.15, density: 0.002,
+                label: 'season_' + nl,
+                plugin: { level: nl, merged: false, removed: false, born: Date.now() }
+            });
             Composite.add(engine.world, nb);
         }
         document.getElementById('scoreValue').textContent = score;
@@ -895,45 +939,52 @@ function checkGameOver() {
 function loop() {
     if (!gameRunning) return;
 
-    var canvas = document.getElementById('gameCanvas');
-    var ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, CW, CH);
+    try {
+        var canvas = document.getElementById('gameCanvas');
+        var ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, CW, CH);
 
-    // Process pending merges
-    processMerges();
+        // Process pending merges
+        processMerges();
 
-    // Background
-    drawBackground();
+        // Background
+        drawBackground();
 
-    // Danger zone
-    ctx.fillStyle = 'rgba(255,50,50,0.03)';
-    ctx.fillRect(0, 0, CW, 40);
+        // Danger zone
+        ctx.fillStyle = 'rgba(255,50,50,0.03)';
+        ctx.fillRect(0, 0, CW, 40);
 
-    // Bodies
-    var bodies = Composite.allBodies(engine.world);
-    for (var i = 0; i < bodies.length; i++) {
-        var body = bodies[i];
-        if (!body.label.startsWith('season_')) continue;
-        var lv = body.plugin.level;
-        var s = SEASONS[lv - 1];
-        drawShape(ctx, s.shape, body.position.x, body.position.y, s.radius, s.color, s.dark);
-    }
-
-    // FX
-    drawFx(ctx);
-
-    // Game over check
-    if (!canDrop && checkGameOver()) {
-        gameRunning = false;
-        // Save high score
-        if (score > highestScore) {
-            highestScore = score;
-            try { localStorage.setItem('seasonsHighScore', highestScore); } catch(e){}
+        // Bodies
+        var bodies = Composite.allBodies(engine.world);
+        for (var i = 0; i < bodies.length; i++) {
+            var body = bodies[i];
+            if (!body.label || !body.label.startsWith('season_')) continue;
+            if (!body.plugin || body.plugin.removed) continue;
+            try {
+                var lv = body.plugin.level;
+                var s = SEASONS[lv - 1];
+                drawShape(ctx, s.shape, body.position.x, body.position.y, s.radius, s.color, s.dark);
+            } catch(e) {}
         }
-        document.getElementById('goScore').textContent = score;
-        document.getElementById('goHighScore').textContent = '最高纪录: ' + highestScore;
-        document.getElementById('gameOver').classList.add('show');
-        return;
+
+        // FX
+        drawFx(ctx);
+
+        // Game over check
+        if (!canDrop && checkGameOver()) {
+            gameRunning = false;
+            if (score > highestScore) {
+                highestScore = score;
+                try { localStorage.setItem('seasonsHighScore', highestScore); } catch(e){}
+            }
+            document.getElementById('goScore').textContent = score;
+            document.getElementById('goHighScore').textContent = '最高纪录: ' + highestScore;
+            document.getElementById('gameOver').classList.add('show');
+            return;
+        }
+    } catch(e) {
+        // Prevent white screen on unexpected errors
+        console.error('Loop error:', e);
     }
 
     requestAnimationFrame(loop);
