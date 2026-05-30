@@ -10,10 +10,17 @@
 
         body {
             font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            background: #0a0a1a;
+            background: linear-gradient(135deg, #ffeaa7 0%, #81ecec 25%, #a29bfe 50%, #fd79a8 75%, #ffeaa7 100%);
+            background-size: 400% 400%;
+            animation: gradientFlow 20s ease infinite;
             display: flex;
             justify-content: center;
             align-items: center;
+        }
+
+        @keyframes gradientFlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
 
         #gameContainer {
@@ -25,6 +32,8 @@
             display: flex;
             flex-direction: column;
             transition: transform 0.05s;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
 
         /* ── Header ── */
@@ -35,12 +44,14 @@
             justify-content: space-between;
             align-items: center;
             padding: 0 20px;
-            background: rgba(0,0,0,0.4);
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,0,0,0.06);
             position: relative;
             z-index: 10;
         }
-        #title { font-size: 20px; color: #ecf0f1; letter-spacing: 4px; font-weight: 600; }
+        #title { font-size: 20px; color: #2c3e50; letter-spacing: 4px; font-weight: 600; }
         #score  { font-size: 18px; color: #ffd700; transition: transform 0.15s; }
         #score.pop { transform: scale(1.3); }
 
@@ -70,8 +81,10 @@
             align-items: center;
             padding: 0 20px;
             gap: 12px;
-            background: rgba(0,0,0,0.25);
-            border-bottom: 1px solid rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(0,0,0,0.04);
             z-index: 10;
         }
         #previewCircle {
@@ -81,8 +94,8 @@
             border: 2px solid rgba(255,255,255,0.3);
         }
         #previewCanvas { width: 36px; height: 36px; }
-        #previewText { color: #888; font-size: 13px; }
-        #previewName  { color: #ddd; font-size: 14px; font-weight: 600; margin-left: 4px; }
+        #previewText { color: #777; font-size: 13px; }
+        #previewName  { color: #333; font-size: 14px; font-weight: 600; margin-left: 4px; }
         #highLevel { color: #ffd700; font-size: 12px; margin-left: auto; }
 
         /* ── Game area ── */
@@ -181,20 +194,22 @@
             justify-content: center;
             align-items: center;
             gap: 30px;
-            background: rgba(0,0,0,0.3);
-            border-top: 1px solid rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-top: 1px solid rgba(0,0,0,0.04);
             z-index: 10;
         }
         .fbtn {
             width: 40px; height: 40px;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.5);
+            border: 1px solid rgba(0,0,0,0.1);
             border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
-            font-size: 18px; cursor: pointer; color: #999;
+            font-size: 18px; cursor: pointer; color: #666;
             transition: background 0.2s;
         }
-        .fbtn:hover { background: rgba(255,255,255,0.2); }
+        .fbtn:hover { background: rgba(255,255,255,0.8); }
 
         /* ── Game Over ── */
         #gameOver {
@@ -649,24 +664,41 @@ function popScore() {
 var bgCanvas, bgCtx;
 function drawBackground() {
     if (!bgCtx) return;
-    var g = bgCtx.createLinearGradient(0, 0, 0, CH);
-    // Hue shifts based on highest level
-    var h1 = 220 - highestLevel * 15;
-    var h2 = 240 - highestLevel * 10;
-    g.addColorStop(0, 'hsl(' + h1 + ',30%,8%)');
-    g.addColorStop(0.5, 'hsl(' + ((h1+h2)/2) + ',25%,12%)');
-    g.addColorStop(1, 'hsl(' + h2 + ',20%,6%)');
+
+    // Gradient shifts with highest merge level - spring to winter
+    var palettes = [
+        { t: '#e8f5e9', b: '#c8e6c9' },   // 0: fresh spring green
+        { t: '#e8f5e9', b: '#a5d6a7' },   // 1: green
+        { t: '#f1f8e9', b: '#c5e1a5' },   // 2: light green
+        { t: '#fce4ec', b: '#f8bbd0' },   // 3: pink (flower)
+        { t: '#fff3e0', b: '#ffcc80' },   // 4: warm orange (fruit)
+        { t: '#fbe9e7', b: '#ffab91' },   // 5: autumn red
+        { t: '#e3f2fd', b: '#bbdefb' },   // 6: frost blue
+        { t: '#e8eaf6', b: '#c5cae9' },   // 7: crystal lavender
+    ];
+    var pi = Math.min(highestLevel, 7);
+    var pal = palettes[pi];
+
+    var g = bgCtx.createLinearGradient(0, 0, CW * 0.3, CH);
+    g.addColorStop(0, pal.t);
+    g.addColorStop(1, pal.b);
     bgCtx.fillStyle = g;
     bgCtx.fillRect(0, 0, CW, CH);
 
-    // Subtle stars
-    bgCtx.fillStyle = 'rgba(255,255,255,0.3)';
-    for (var i = 0; i < 40; i++) {
-        var sx = (Math.sin(i * 127.1 + 311.7) * 0.5 + 0.5) * CW;
-        var sy = (Math.cos(i * 269.5 + 183.3) * 0.5 + 0.5) * CH;
-        var twinkle = Math.sin(Date.now() * 0.002 + i) * 0.5 + 0.5;
-        bgCtx.globalAlpha = 0.1 + twinkle * 0.3;
-        bgCtx.beginPath(); bgCtx.arc(sx, sy, 1 + twinkle, 0, Math.PI * 2); bgCtx.fill();
+    // Floating petals / leaves based on level
+    var now = Date.now() * 0.001;
+    var colors = highestLevel >= 5
+        ? ['rgba(211,84,0,0.15)', 'rgba(245,166,35,0.12)', 'rgba(255,107,107,0.1)']
+        : ['rgba(168,230,207,0.2)', 'rgba(248,180,196,0.15)', 'rgba(125,206,160,0.12)'];
+
+    for (var i = 0; i < 15; i++) {
+        var x = ((Math.sin(now * 0.3 + i * 2.1) * 0.5 + 0.5) * CW);
+        var y = ((i / 15) * CH + now * 20 + i * 100) % (CH + 40) - 20;
+        bgCtx.globalAlpha = 0.4 + Math.sin(now + i) * 0.2;
+        bgCtx.fillStyle = colors[i % colors.length];
+        bgCtx.beginPath();
+        bgCtx.arc(x, y, 3 + Math.sin(now + i) * 2, 0, Math.PI * 2);
+        bgCtx.fill();
     }
     bgCtx.globalAlpha = 1;
 }
@@ -754,6 +786,8 @@ function onDrop(e) {
 }
 
 /* ── Collision ── */
+var pendingMerges = [];
+
 function onCollision(event) {
     var pairs = event.pairs;
     for (var i = 0; i < pairs.length; i++) {
@@ -762,31 +796,44 @@ function onCollision(event) {
         if (a.plugin.merged || b.plugin.merged) continue;
         if (a.plugin.level !== b.plugin.level) continue;
 
+        // Mark immediately to prevent re-merging
         a.plugin.merged = true;
         b.plugin.merged = true;
-        var lv = a.plugin.level;
+
+        // Store merge data for processing
+        pendingMerges.push({ a: a, b: b, lv: a.plugin.level });
+    }
+}
+
+function processMerges() {
+    var merges = pendingMerges.slice();
+    pendingMerges = [];
+
+    for (var i = 0; i < merges.length; i++) {
+        var m = merges[i];
+        var a = m.a, b = m.b, lv = m.lv;
+
+        // Verify bodies still exist in world
+        if (!Composite.get(engine.world, a.id, 'body') || !Composite.get(engine.world, b.id, 'body')) continue;
+
         var mx = (a.position.x + b.position.x) / 2;
         var my = (a.position.y + b.position.y) / 2;
 
-        // Add combo
         addCombo();
         var comboMult = Math.max(1, combo);
 
         if (lv === 8) {
-            // Annihilation!
             var annihilateScore = 2000 * comboMult;
             score += annihilateScore;
             addAnnihilation(mx, my);
             shake(12, 400);
             playAnnihilateSound();
             showFloatScore(mx, my, annihilateScore, 36);
-
-            // Full screen flash
             var flash = document.getElementById('annihilateFlash');
             flash.classList.add('flash');
             setTimeout(function(){ flash.classList.remove('flash'); }, 150);
-
-            setTimeout(function(){ Composite.remove(engine.world, a); Composite.remove(engine.world, b); }, 50);
+            Composite.remove(engine.world, a);
+            Composite.remove(engine.world, b);
         } else {
             var nl = lv + 1;
             var ns = SEASONS[nl - 1];
@@ -797,31 +844,19 @@ function onCollision(event) {
             });
             var mergeScore = ns.score * comboMult;
             score += mergeScore;
-
-            // Effects based on level
             addGlow(mx, my, ns.color, ns.radius * 1.5);
             addBurst(mx, my, ns.color, 8 + nl * 3, 2 + nl * 0.5);
-
             playMergeSound(nl);
             showFloatScore(mx, my, mergeScore, 14 + nl * 3);
-
-            // Screen shake for level 5+
             if (nl >= 5) shake(3 + nl, 150 + nl * 30);
-
-            // Announcement for level 4+
             showAnnounce(nl);
-
-            // Update highest level
             if (nl > highestLevel) {
                 highestLevel = nl;
                 document.getElementById('highLevel').textContent = '最高: ' + SEASONS[highestLevel - 1].name;
             }
-
-            setTimeout(function(){
-                Composite.remove(engine.world, a);
-                Composite.remove(engine.world, b);
-                Composite.add(engine.world, nb);
-            }, 50);
+            Composite.remove(engine.world, a);
+            Composite.remove(engine.world, b);
+            Composite.add(engine.world, nb);
         }
         document.getElementById('scoreValue').textContent = score;
         popScore();
@@ -863,6 +898,9 @@ function loop() {
     var canvas = document.getElementById('gameCanvas');
     var ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, CW, CH);
+
+    // Process pending merges
+    processMerges();
 
     // Background
     drawBackground();
